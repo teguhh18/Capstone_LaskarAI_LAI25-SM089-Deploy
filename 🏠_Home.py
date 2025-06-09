@@ -88,9 +88,10 @@ st.sidebar.markdown("<h2 style='text-align: center;'>Menu</h2>", unsafe_allow_ht
 with st.container():
     # Menampilkan Home image dengan custom size
     try:
-        home_image = Image.open("flood.jpg")
-        home_image_resized = home_image.resize((1540, 640))
-        st.image(home_image_resized, use_container_width=True)
+        # home_image = Image.open("flood.jpg")
+        # home_image_resized = home_image.resize((1540, 640))
+        # st.image(home_image_resized, use_container_width=True)
+        st.image("flood_resize.jpg", use_container_width=True)
     except FileNotFoundError:
         st.warning("Gambar utama 'flood.jpg' tidak ditemukan.")
 
