@@ -5,21 +5,19 @@ import joblib
 from PIL import Image
 import os
 from tensorflow import keras
-import base64  # untuk ubah gambar jadi format yang bisa dibaca HTML
-import json
+import base64 # Diperlukan lagi untuk metode ini
+# import json -> Sudah tidak dipakai
 
 # —————— CONFIG ——————
 st.set_page_config(page_title="Flood Prediction App (Prototype)", layout="wide")
 
-
 # —————— FUNGSI-FUNGSI OPTIMASI ——————
 
-# --- FUNGSI BARU DENGAN CACHE UNTUK GAMBAR ---
-# Fungsi ini hanya akan berjalan sekali untuk setiap gambar.
-# Hasilnya disimpan di memori (cache) untuk pemanggilan berikutnya.
+# FUNGSI UNTUK MENGAMBIL & CACHE GAMBAR SEBAGAI BASE64
+# Ini adalah kunci performa cepat: @st.cache_data
 @st.cache_data
 def get_image_as_base64(file_path):
-    """Fungsi ini membaca file gambar dan meng-encode ke base64."""
+    """Fungsi ini membaca file gambar dan meng-encode ke base64. Hasilnya akan di-cache."""
     try:
         with open(file_path, "rb") as f:
             data = f.read()
@@ -28,16 +26,16 @@ def get_image_as_base64(file_path):
         st.error(f"Gambar tidak ditemukan di: {file_path}")
         return None
 
-# --- FUNGSI KARTU YANG SUDAH DIOPTIMALKAN ---
-# Fungsi ini sekarang hanya bertugas membuat HTML, tidak lagi membaca file.
+# FUNGSI UNTUK MEMBUAT HTML KARTU (SEPERTI YANG ANDA INGINKAN)
 def create_info_card(encoded_img, title, text):
     """Fungsi ini membuat HTML untuk kartu dari data yang sudah siap."""
-    if encoded_img is None:
-        return ""  # Jangan tampilkan kartu jika gambar gagal di-load
+    if not encoded_img:
+        return "" # Jangan tampilkan kartu jika gambar gagal di-load
 
+    # Menggunakan "data:image/jpeg;base64," agar kompatibel dengan berbagai format gambar
     card_html = f"""
     <div class="card">
-        <img src="data:image/png;base64,{encoded_img}" alt="card image">
+        <img src="data:image/jpeg;base64,{encoded_img}" alt="card image">
         <div class="card-body">
             <h4>{title}</h4>
             <p>{text}</p>
@@ -66,12 +64,10 @@ def load_scaler(scaler_path):
         st.error(f"Gagal memuat scaler: {e}")
         return None
 
-# Path ke file-file
 MODEL_PATH = "flood_model_f.h5"
 SCALER_PATH = "flood_scaler.pkl"
 model = load_my_model(MODEL_PATH)
 scaler = load_scaler(SCALER_PATH)
-
 
 # —————— HEADER ——————
 st.markdown(
@@ -86,19 +82,22 @@ st.markdown("---")
 st.sidebar.markdown("<h2 style='text-align: center;'>Menu</h2>", unsafe_allow_html=True)
 
 with st.container():
-    # Menampilkan Home image dengan custom size
     try:
-        # home_image = Image.open("flood.jpg")
-        # home_image_resized = home_image.resize((1540, 640))
-        # st.image(home_image_resized, use_container_width=True)
-        st.image("flood_resize.jpg", use_container_width=True)
+        # st.image("flood_resize.jpg", use_container_width=True)
+        # Menampilkan HOme image dengan custom size
+        IMAGE_DIRECTORY = "."
+        IMAGE_FILENAME = "flood.jpg"
+        image_path = os.path.join(IMAGE_DIRECTORY, IMAGE_FILENAME)
+        home_image = Image.open(image_path)
+        home_image_resized = home_image.resize((1540, 640))
+        landing_image = None
+        st.image(home_image_resized, use_container_width=True)
     except FileNotFoundError:
-        st.warning("Gambar utama 'flood.jpg' tidak ditemukan.")
+        st.warning("Gambar utama 'flood_resize.jpg' tidak ditemukan.")
 
     # —————— FORM INPUT DATA ——————
     with st.form("flood_input_form", clear_on_submit=False):
         st.subheader("📝 Silahkan Masukkan Data Untuk Prediksi Dibawah ini")
-
         col1, col2 = st.columns([1, 1])
         with col1:
             MonsoonIntensity = st.number_input("Moon Soon Intensity", step=1, min_value=0)
@@ -111,110 +110,91 @@ with st.container():
             Deforestation = st.number_input("Deforestation", step=1, min_value=0)
 
         submitted = st.form_submit_button("Predict", type="primary")
-
     st.markdown("---")
 
     # —————— BLOK PREDIKSI & HASIL ——————
     if submitted:
         if not all([model, scaler]):
-             st.error("Model atau Scaler gagal dimuat. Tidak dapat melakukan prediksi.")
+            st.error("Model atau Scaler gagal dimuat. Tidak dapat melakukan prediksi.")
         else:
-            # Bangun DataFrame dari input
+            # (Bagian proses prediksi tetap sama)
             df_input = pd.DataFrame({
-                "MonsoonIntensity": [MonsoonIntensity],
-                "CoastalVulnerability": [CoastalVulnerability],
-                "WetlandLoss": [WetlandLoss],
-                "Urbanization": [Urbanization],
-                "Encroachments": [Encroachments],
-                "Siltation": [Siltation],
-                "Deforestation": [Deforestation],
+                "MonsoonIntensity": [MonsoonIntensity], "CoastalVulnerability": [CoastalVulnerability],
+                "WetlandLoss": [WetlandLoss], "Urbanization": [Urbanization],
+                "Encroachments": [Encroachments], "Siltation": [Siltation], "Deforestation": [Deforestation],
             })
-
-            # Feature Engineering
             df_input['EnvironmentalDegradationScore'] = df_input[['Deforestation', 'WetlandLoss', 'Urbanization']].mean(axis=1)
             df_input['RiverObstructionRisk'] = df_input[['Encroachments', 'Siltation']].mean(axis=1)
-            
             df_predict = df_input.drop(columns=['WetlandLoss', 'Encroachments', 'Urbanization'])
-            
-            # Mengurutkan kolom sesuai kebutuhan model
-            urutan_fitur_model = [
-                'MonsoonIntensity', 'CoastalVulnerability', 'EnvironmentalDegradationScore',
-                'RiverObstructionRisk', 'Siltation', 'Deforestation'
-            ]
+            urutan_fitur_model = ['MonsoonIntensity', 'CoastalVulnerability', 'EnvironmentalDegradationScore', 'RiverObstructionRisk', 'Siltation', 'Deforestation']
             df_predict = df_predict[urutan_fitur_model]
-
-            # SCALING DATA & PREDIKSI
             scaled_input = scaler.transform(df_predict)
             prediction = model.predict(scaled_input)
             flood_probability_percentage = float(prediction.flatten()[0]) * 100
 
-            # Tampilkan Hasil Prediksi
             st.markdown(f"""
                 <h3 style='text-align: center; color: #2B7A78;'>
                     🧾 Probabilitas Banjir: <span style="font-size: 28px;">{flood_probability_percentage:.2f}%</span>
                 </h3>
                 """, unsafe_allow_html=True)
             
-            # Tampilkan Alert Sesuai Hasil
             if prediction >= 0.8:
                 st.markdown("""
                     <div style="background-color: #fff3cd; color: #856404; padding: 20px; margin: 20px auto; border: 1px solid #ffeeba; border-radius: 5px; max-width: 700px; text-align: center;">
-                        <h4 style="margin-top: 0;">⚠️ WARNING ALERT!!!</h4>
-                        <h5 style="margin-top: 0;">Tingkat Risiko Banjir Tinggi</h5>
+                        <h4 style="margin-top: 0;">⚠️ WARNING ALERT!!!</h4> <h5 style="margin-top: 0;">Tingkat Risiko Banjir Tinggi</h5>
                         <p style="text-align: justify;">Mohon tetap waspada dan segera amankan barang-barang penting. Pantau terus perkembangan cuaca dan ikuti arahan resmi dari pemerintah daerah apabila kondisi memburuk.</p>
-                    </div>
-                    """, unsafe_allow_html=True)
+                    </div> """, unsafe_allow_html=True)
             else:
                 st.markdown("""
                     <div style="background-color: #d4edda; color: #155724; padding: 20px; margin: 20px auto; border: 1px solid #c3e6cb; border-radius: 5px; max-width: 700px; text-align: center;">
-                        <h4 style="margin-top: 0;">✅ STATUS AMAN</h4>
-                        <h5 style="margin-top: 0;">Tingkat risiko banjir rendah</h5>
+                        <h4 style="margin-top: 0;">✅ STATUS AMAN</h4> <h5 style="margin-top: 0;">Tingkat risiko banjir rendah</h5>
                         <p style="text-align: justify;">Cuaca dan kondisi lingkungan saat ini tergolong aman. Tetap waspada dan ikuti informasi resmi jika ada perubahan situasi.</p>
-                    </div>
-                    """, unsafe_allow_html=True)
+                    </div>""", unsafe_allow_html=True)
 
-            # --- BLOK SOSIALISASI YANG SUDAH DIOPTIMALKAN ---
+            # --- BLOK SOSIALISASI (TAMPILAN KARTU KUSTOM + PERFORMA CEPAT) ---
             st.markdown("---")
             st.subheader("Sosialisasi")
 
-            try:
-                with open('sosialisasi.json', 'r', encoding='utf-8') as f:
-                    data_sosialisasi = json.load(f)
+            # Data untuk kartu-kartu. Lebih mudah dikelola daripada hardcode.
+            card_data = [
+                {"img_path": "images/Coastal.jpg", "title": "Kerentanan Wilayah Pesisir", "text": "Wilayah pesisir sangat rentan terhadap banjir akibat pasang laut dan badai tropis. Sosialisasi penting dilakukan kepada warga pesisir terkait jalur evakuasi, sistem peringatan dini, serta pentingnya penanaman vegetasi penahan abrasi seperti mangrove."},
+                {"img_path": "images/Deforestation.jpg", "title": "Penggundulan Hutan", "text": "Hutan yang gundul kehilangan kemampuan menahan air hujan, menyebabkan limpasan permukaan yang lebih besar. Edukasi penting agar masyarakat memahami fungsi hutan sebagai pelindung banjir alami dan mendukung kegiatan penghijauan."},
+                {"img_path": "images/EnvironmentalDegradation.jpg", "title": "Kerusakan Lingkungan", "text": "Aktivitas seperti illegal logging, pembukaan lahan berlebihan, dan pencemaran memperburuk daya serap tanah. Sosialisasi harus menekankan pentingnya konservasi lingkungan dan pengawasan terhadap aktivitas yang merusak ekosistem."},
+                {"img_path": "images/monsoon.jpg", "title": "Intensitas Muson", "text": "Musim muson membawa curah hujan tinggi yang bisa menyebabkan banjir besar, terutama di daerah dataran rendah. Masyarakat perlu memahami pola cuaca musiman dan meningkatkan kesiapan saat intensitas muson meningkat, seperti membersihkan saluran air dan tidak membuang sampah sembarangan."},
+                {"img_path": "images/RiverObstructionRisk.jpg", "title": "Risiko Sumbatan Sungai", "text": "Sampah, endapan lumpur, dan bangunan liar di sepanjang aliran sungai dapat menghambat aliran air, memicu banjir secara tiba-tiba. Edukasi diperlukan agar masyarakat ikut menjaga kebersihan sungai dan tidak membangun di bantaran sungai tanpa izin."},
+                {"img_path": "images/Siltation.jpg", "title": "Pendangkalan Sungai", "text": "Endapan lumpur atau pasir yang berlebihan di sungai memperkecil kapasitas aliran air. Sosialisasi bertujuan untuk mengedukasi pentingnya reboisasi dan pengelolaan lahan agar sedimentasi dapat diminimalisir dan tidak memicu banjir."}
+            ]
 
-                # Masukkan CSS untuk styling kartu
-                st.markdown("""
-                <style>
-                    .card {
-                        border: 1px solid #ddd; border-radius: 10px;
-                        box-shadow: 0 4px 8px rgba(0,0,0,0.1); transition: 0.3s;
-                        width: 100%; margin-bottom: 20px; overflow: hidden;
-                        display: flex; flex-direction: column; height: 100%;
-                    }
-                    .card:hover { box-shadow: 0 8px 16px rgba(0,0,0,0.2); }
-                    .card img { width: 100%; object-fit: cover; height: 150px; }
-                    .card-body { padding: 15px; flex-grow: 1; }
-                    .card-body h4 { margin-top: 0; margin-bottom: 10px; font-weight: bold; }
-                    .card-body p { font-size: 14px; color: #555; }
-                </style>
-                """, unsafe_allow_html=True)
-
-                # Membuat layout grid dan menampilkan kartu secara dinamis
-                cols = st.columns(3)
-                for i, item in enumerate(data_sosialisasi):
-                    with cols[i % 3]:
-                        # Panggil fungsi yang di-cache untuk mendapatkan base64
-                        encoded_image = get_image_as_base64(item['img_path'])
-                        # Buat HTML card dengan data yang sudah siap
-                        card_html = create_info_card(encoded_image, item['title'], item['text'])
-                        st.markdown(card_html, unsafe_allow_html=True)
+            # Masukkan CSS untuk styling kartu
+            st.markdown("""
+            <style>
+                .card { border: 1px solid #ddd; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); transition: 0.3s; width: 100%; margin-bottom: 20px; overflow: hidden; display: flex; flex-direction: column; height: 100%; }
+                .card:hover { box-shadow: 0 8px 16px rgba(0,0,0,0.2); }
+                .card img { width: 100%; object-fit: cover; height: 150px; }
+                .card-body { padding: 15px; flex-grow: 1; }
+                .card-body h4 { margin-top: 0; margin-bottom: 10px; font-weight: bold; }
+                .card-body p { font-size: 14px; color: #555; }
+            </style>
+            """, unsafe_allow_html=True)
             
-            except FileNotFoundError:
-                st.error("File 'sosialisasi.json' tidak ditemukan.")
-            except Exception as e:
-                st.error(f"Terjadi kesalahan saat menampilkan bagian sosialisasi: {e}")
+            # Membuat layout grid dan menampilkan kartu secara dinamis
+            cols = st.columns(3)
+            # Mengatur urutan kartu agar lebih seimbang
+            card_order = [0, 3, 1, 4, 2, 5]
+            
+            for i in range(len(card_order)):
+                with cols[i % 3]:
+                    card_index = card_order[i]
+                    item = card_data[card_index]
+                    # Panggil fungsi yang di-cache untuk mendapatkan base64
+                    encoded_image = get_image_as_base64(item['img_path'])
+                    # Buat HTML card dengan data yang sudah siap
+                    card_html = create_info_card(encoded_image, item['title'], item['text'])
+                    st.markdown(card_html, unsafe_allow_html=True)
 
     else:
         st.info("🔎 Masukkan nilai fitur di atas, lalu klik **Predict** untuk melihat hasil.")
+
 
 # —————— FOOTER ——————
 st.markdown("---")
