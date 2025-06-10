@@ -1,48 +1,13 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import joblib
 from PIL import Image
+import joblib
 import os
 from tensorflow import keras
-import base64 # Diperlukan lagi untuk metode ini
-# import json -> Sudah tidak dipakai
 
 # —————— CONFIG ——————
 st.set_page_config(page_title="Flood Prediction App (Prototype)", layout="wide")
-
-# —————— FUNGSI-FUNGSI OPTIMASI ——————
-
-# FUNGSI UNTUK MENGAMBIL & CACHE GAMBAR SEBAGAI BASE64
-# Ini adalah kunci performa cepat: @st.cache_data
-@st.cache_data
-def get_image_as_base64(file_path):
-    """Fungsi ini membaca file gambar dan meng-encode ke base64. Hasilnya akan di-cache."""
-    try:
-        with open(file_path, "rb") as f:
-            data = f.read()
-            return base64.b64encode(data).decode()
-    except FileNotFoundError:
-        st.error(f"Gambar tidak ditemukan di: {file_path}")
-        return None
-
-# FUNGSI UNTUK MEMBUAT HTML KARTU (SEPERTI YANG ANDA INGINKAN)
-def create_info_card(encoded_img, title, text):
-    """Fungsi ini membuat HTML untuk kartu dari data yang sudah siap."""
-    if not encoded_img:
-        return "" # Jangan tampilkan kartu jika gambar gagal di-load
-
-    # Menggunakan "data:image/jpeg;base64," agar kompatibel dengan berbagai format gambar
-    card_html = f"""
-    <div class="card">
-        <img src="data:image/jpeg;base64,{encoded_img}" alt="card image">
-        <div class="card-body">
-            <h4>{title}</h4>
-            <p>{text}</p>
-        </div>
-    </div>
-    """
-    return card_html
 
 
 # —————— LOAD MODEL & SCALER (DENGAN CACHE) ——————
@@ -68,6 +33,22 @@ MODEL_PATH = "flood_model_f.h5"
 SCALER_PATH = "flood_scaler.pkl"
 model = load_my_model(MODEL_PATH)
 scaler = load_scaler(SCALER_PATH)
+
+# —————— CSS STYLING ——————
+st.markdown("""
+    <style>
+    .custom-card {
+        padding: 15px;
+        border-radius: 10px;
+        box-shadow: 2px 2px 8px #999;
+        margin-bottom: 15px;
+        background-color: var(--secondary-background-color);
+        color: var(--text-color);
+        transition: transform 0.2s;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 
 # —————— HEADER ——————
 st.markdown(
@@ -95,7 +76,6 @@ with st.container():
     except FileNotFoundError:
         st.warning("Gambar utama 'flood_resize.jpg' tidak ditemukan.")
 
-    # —————— FORM INPUT DATA ——————
     with st.form("flood_input_form", clear_on_submit=False):
         st.subheader("📝 Silahkan Masukkan Data Untuk Prediksi Dibawah ini")
         col1, col2 = st.columns([1, 1])
@@ -112,12 +92,10 @@ with st.container():
         submitted = st.form_submit_button("Predict", type="primary")
     st.markdown("---")
 
-    # —————— BLOK PREDIKSI & HASIL ——————
     if submitted:
         if not all([model, scaler]):
             st.error("Model atau Scaler gagal dimuat. Tidak dapat melakukan prediksi.")
         else:
-            # (Bagian proses prediksi tetap sama)
             df_input = pd.DataFrame({
                 "MonsoonIntensity": [MonsoonIntensity], "CoastalVulnerability": [CoastalVulnerability],
                 "WetlandLoss": [WetlandLoss], "Urbanization": [Urbanization],
@@ -151,50 +129,71 @@ with st.container():
                         <p style="text-align: justify;">Cuaca dan kondisi lingkungan saat ini tergolong aman. Tetap waspada dan ikuti informasi resmi jika ada perubahan situasi.</p>
                     </div>""", unsafe_allow_html=True)
 
-            # --- BLOK SOSIALISASI (TAMPILAN KARTU KUSTOM + PERFORMA CEPAT) ---
+            # —————— KODE CARD SOSIALISASI ——————
             st.markdown("---")
             st.subheader("Sosialisasi")
 
-            # Data untuk kartu-kartu. Lebih mudah dikelola daripada hardcode.
-            card_data = [
-                {"img_path": "images/Coastal.jpg", "title": "Kerentanan Wilayah Pesisir", "text": "Wilayah pesisir sangat rentan terhadap banjir akibat pasang laut dan badai tropis. Sosialisasi penting dilakukan kepada warga pesisir terkait jalur evakuasi, sistem peringatan dini, serta pentingnya penanaman vegetasi penahan abrasi seperti mangrove."},
-                {"img_path": "images/Deforestation.jpg", "title": "Penggundulan Hutan", "text": "Hutan yang gundul kehilangan kemampuan menahan air hujan, menyebabkan limpasan permukaan yang lebih besar. Edukasi penting agar masyarakat memahami fungsi hutan sebagai pelindung banjir alami dan mendukung kegiatan penghijauan."},
-                {"img_path": "images/EnvironmentalDegradation.jpg", "title": "Kerusakan Lingkungan", "text": "Aktivitas seperti illegal logging, pembukaan lahan berlebihan, dan pencemaran memperburuk daya serap tanah. Sosialisasi harus menekankan pentingnya konservasi lingkungan dan pengawasan terhadap aktivitas yang merusak ekosistem."},
-                {"img_path": "images/monsoon.jpg", "title": "Intensitas Muson", "text": "Musim muson membawa curah hujan tinggi yang bisa menyebabkan banjir besar, terutama di daerah dataran rendah. Masyarakat perlu memahami pola cuaca musiman dan meningkatkan kesiapan saat intensitas muson meningkat, seperti membersihkan saluran air dan tidak membuang sampah sembarangan."},
-                {"img_path": "images/RiverObstructionRisk.jpg", "title": "Risiko Sumbatan Sungai", "text": "Sampah, endapan lumpur, dan bangunan liar di sepanjang aliran sungai dapat menghambat aliran air, memicu banjir secara tiba-tiba. Edukasi diperlukan agar masyarakat ikut menjaga kebersihan sungai dan tidak membangun di bantaran sungai tanpa izin."},
-                {"img_path": "images/Siltation.jpg", "title": "Pendangkalan Sungai", "text": "Endapan lumpur atau pasir yang berlebihan di sungai memperkecil kapasitas aliran air. Sosialisasi bertujuan untuk mengedukasi pentingnya reboisasi dan pengelolaan lahan agar sedimentasi dapat diminimalisir dan tidak memicu banjir."}
-            ]
-
-            # Masukkan CSS untuk styling kartu
-            st.markdown("""
-            <style>
-                .card { border: 1px solid #ddd; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); transition: 0.3s; width: 100%; margin-bottom: 20px; overflow: hidden; display: flex; flex-direction: column; height: 100%; }
-                .card:hover { box-shadow: 0 8px 16px rgba(0,0,0,0.2); }
-                .card img { width: 100%; object-fit: cover; height: 150px; }
-                .card-body { padding: 15px; flex-grow: 1; }
-                .card-body h4 { margin-top: 0; margin-bottom: 10px; font-weight: bold; }
-                .card-body p { font-size: 14px; color: #555; }
-            </style>
-            """, unsafe_allow_html=True)
-            
-            # Membuat layout grid dan menampilkan kartu secara dinamis
             cols = st.columns(3)
-            # Mengatur urutan kartu agar lebih seimbang
-            card_order = [0, 3, 1, 4, 2, 5]
-            
-            for i in range(len(card_order)):
-                with cols[i % 3]:
-                    card_index = card_order[i]
-                    item = card_data[card_index]
-                    # Panggil fungsi yang di-cache untuk mendapatkan base64
-                    encoded_image = get_image_as_base64(item['img_path'])
-                    # Buat HTML card dengan data yang sudah siap
-                    card_html = create_info_card(encoded_image, item['title'], item['text'])
-                    st.markdown(card_html, unsafe_allow_html=True)
+
+            # ——— CARD 1
+            with cols[0]:
+                st.markdown("""
+                    <div class="custom-card">
+                        <img src="https://raw.githubusercontent.com/teguhh18/image-streamlit/main/monsoon.jpg" width="100%" height="200px" style="border-radius:10px; object-fit:cover;">
+                        <h4>Intensitas Muson</h4>
+                        <p>Musim muson membawa curah hujan tinggi yang bisa menyebabkan banjir besar, terutama di daerah dataran rendah. Masyarakat perlu memahami pola cuaca musiman dan meningkatkan kesiapan saat intensitas muson meningkat, seperti membersihkan saluran air dan tidak membuang sampah sembarangan.</p>
+                    </div>
+                """, unsafe_allow_html=True)
+
+                st.markdown("""
+                    <div class="custom-card">
+                        <img src="https://raw.githubusercontent.com/teguhh18/image-streamlit/main/Siltation.jpg" width="100%" height="200px" style="border-radius:10px; object-fit:cover;">
+                        <h4>Pendangkalan Sungai</h4>
+                        <p>Endapan lumpur atau pasir yang berlebihan di sungai memperkecil kapasitas aliran air. Sosialisasi bertujuan untuk mengedukasi pentingnya reboisasi dan pengelolaan lahan agar sedimentasi dapat diminimalisir dan tidak memicu banjir.</p>
+                    </div>
+                """, unsafe_allow_html=True)
+                
+
+
+            # ——— CARD 2
+            with cols[1]:
+                st.markdown("""
+                    <div class="custom-card">
+                        <img src="https://raw.githubusercontent.com/teguhh18/image-streamlit/main/RiverObstructionRisk.jpg" width="100%" height="200px" style="border-radius:10px; object-fit:cover;">
+                        <h4>Risiko Sumbatan Sungai</h4>
+                        <p>Sampah, endapan lumpur, dan bangunan liar di sepanjang aliran sungai dapat menghambat aliran air, memicu banjir secara tiba-tiba. Edukasi diperlukan agar masyarakat ikut menjaga kebersihan sungai dan tidak membangun di bantaran sungai tanpa izin</p>
+                    </div>
+                """, unsafe_allow_html=True)
+
+                st.markdown("""
+                    <div class="custom-card">
+                        <img src="https://raw.githubusercontent.com/teguhh18/image-streamlit/main/EnvironmentalDegradation.jpg" width="100%" height="200px" style="border-radius:10px; object-fit:cover;">
+                        <h4>Kerusakan Lingkungan</h4>
+                        <p>Aktivitas seperti illegal logging, pembukaan lahan berlebihan, dan pencemaran memperburuk daya serap tanah. Sosialisasi harus menekankan pentingnya konservasi lingkungan dan pengawasan terhadap aktivitas yang merusak ekosistem.</p>
+                    </div>
+                """, unsafe_allow_html=True)
+
+
+            # ——— CARD 3
+            with cols[2]:
+                st.markdown("""
+                    <div class="custom-card">
+                        <img src="https://raw.githubusercontent.com/teguhh18/image-streamlit/main/Coastal.jpg" width="100%" height="200px" style="border-radius:10px; object-fit:cover;">
+                        <h4>Kerentanan Wilayah Pesisir</h4>
+                        <p>Wilayah pesisir sangat rentan terhadap banjir akibat pasang laut dan badai tropis. Sosialisasi penting dilakukan kepada warga pesisir terkait jalur evakuasi, sistem peringatan dini, serta pentingnya penanaman vegetasi penahan abrasi seperti mangrove.</p>
+                    </div>
+                """, unsafe_allow_html=True)
+
+                st.markdown("""
+                    <div class="custom-card">
+                        <img src="https://raw.githubusercontent.com/teguhh18/image-streamlit/main/Deforestation.jpg" width="100%" height="200px" style="border-radius:10px; object-fit:cover;">
+                        <h4>Penggundulan Hutan</h4>
+                        <p>Hutan yang gundul kehilangan kemampuan menahan air hujan, menyebabkan limpasan permukaan yang lebih besar. Edukasi penting agar masyarakat memahami fungsi hutan sebagai pelindung banjir alami dan mendukung kegiatan penghijauan.</p>
+                    </div>
+                """, unsafe_allow_html=True)
 
     else:
         st.info("🔎 Masukkan nilai fitur di atas, lalu klik **Predict** untuk melihat hasil.")
-
 
 # —————— FOOTER ——————
 st.markdown("---")
