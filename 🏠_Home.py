@@ -194,7 +194,7 @@ with st.container():
                 """, unsafe_allow_html=True)
 
     else:
-        st.info("🔎 Masukkan nilai fitur di atas, lalu klik **Predict** untuk melihat hasil.")
+        st.info("🔎 Masukkan nilai fitur di atas, lalu klik **Prediksi** untuk melihat hasil.")
 
 # —————— FOOTER ——————
 st.markdown("---")
