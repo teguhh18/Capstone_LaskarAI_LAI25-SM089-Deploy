@@ -78,16 +78,17 @@ with st.container():
 
     with st.form("flood_input_form", clear_on_submit=False):
         st.subheader("📝 Silahkan Masukkan Data Untuk Prediksi Dibawah ini")
+        st.info("**Petunjuk:** Untuk semua fitur di bawah ini, silakan masukkan nilai antara **0** hingga **30**.", icon="ℹ️")
         col1, col2 = st.columns([1, 1])
         with col1:
-            MonsoonIntensity = st.number_input("Moon Soon Intensity", step=1, min_value=0)
-            CoastalVulnerability = st.number_input("Coastal Vulnerability", step=1, min_value=0)
-            WetlandLoss = st.number_input("WetlandLoss", step=1, min_value=0)
-            Encroachments = st.number_input("Encroachments", min_value=0, step=1)
+            MonsoonIntensity = st.number_input("Moon Soon Intensity", step=1, min_value=0, max_value=30)
+            CoastalVulnerability = st.number_input("Coastal Vulnerability", step=1, min_value=0, max_value=30)
+            WetlandLoss = st.number_input("WetlandLoss", step=1, min_value=0, max_value=30)
+            Encroachments = st.number_input("Encroachments", min_value=0, step=1, max_value=30)
         with col2:
-            Urbanization = st.number_input("Urbanization", step=1, min_value=0)
-            Siltation = st.number_input("Siltation", step=1, min_value=0)
-            Deforestation = st.number_input("Deforestation", step=1, min_value=0)
+            Urbanization = st.number_input("Urbanization", step=1, min_value=0, max_value=30)
+            Siltation = st.number_input("Siltation", step=1, min_value=0, max_value=30)
+            Deforestation = st.number_input("Deforestation", step=1, min_value=0, max_value=30)
 
         submitted = st.form_submit_button("Predict", type="primary")
     st.markdown("---")
