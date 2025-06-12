@@ -88,7 +88,7 @@ with st.container():
         with col2:
             Urbanization = st.number_input("Kepadatan Penduduk (Urbanisasi)", step=1, min_value=0, max_value=30, help="Seberapa padat wilayah dengan bangunan dan jalan beton/aspal. Semakin tinggi nilainya, semakin sedikit tanah yang bisa menyerap air.")
             Siltation = st.number_input("Pendangkalan Sungai (Sedimentasi)", step=1, min_value=0, max_value=30, help="Tingkat pendangkalan sungai akibat endapan lumpur/pasir. Sungai yang dangkal (nilai tinggi) tidak dapat menampung banyak air dan mudah meluap.")
-            Deforestation = st.number_input("Deforestasi (Penggundulan Hutan)", step=1, min_value=0, max_value=30, help="Mengukur tingkat penggundulan hutan. Hutan yang gundul (nilai tinggi) kehilangan kemampuan untuk menyerap dan menahan air hujan.")
+            Deforestation = st.number_input("Penggundulan Hutan (Deforestasi)", step=1, min_value=0, max_value=30, help="Mengukur tingkat penggundulan hutan. Hutan yang gundul (nilai tinggi) kehilangan kemampuan untuk menyerap dan menahan air hujan.")
 
         submitted = st.form_submit_button("Prediksi", type="primary")
     st.markdown("---")
@@ -117,18 +117,41 @@ with st.container():
                 </h3>
                 """, unsafe_allow_html=True)
             
-            if prediction >= 0.8:
+            if prediction > 0.70:
                 st.markdown("""
-                    <div style="background-color: #fff3cd; color: #856404; padding: 20px; margin: 20px auto; border: 1px solid #ffeeba; border-radius: 5px; max-width: 700px; text-align: center;">
-                        <h4 style="margin-top: 0;">⚠️ PERINGATAN !!!</h4> <h5 style="margin-top: 0;">Tingkat Risiko Banjir Tinggi</h5>
-                        <p style="text-align: justify;">Mohon tetap waspada dan segera amankan barang-barang penting. Pantau terus perkembangan cuaca dan ikuti arahan resmi dari pemerintah daerah apabila kondisi memburuk.</p>
-                    </div> """, unsafe_allow_html=True)
+                    <div style="background-color: #f8d7da; color: #721c24; padding: 20px; margin: 10px auto; border: 1px solid #f5c6cb; border-radius: 5px; max-width: 700px; text-align: center;">
+                        <h4 style="margin-top: 0;">🚨 STATUS WASPADA</h4>
+                        <h5 style="margin-top: 0; font-weight: normal;">Tingkat Risiko Banjir Sangat Tinggi</h5>
+                        <p style="text-align: justify; margin-bottom: 0;">
+                             Risiko banjir sangat tinggi. Jika Anda berada di area rawan, Mohon tetap waspada dan segera amankan barang-barang penting, dan <b>segera evakuasi</b> ke tempat yang lebih aman. Ikuti arahan dari tim SAR atau Badan Penanggulangan Bencana Daerah.
+                        </p>
+                    </div>
+                """, unsafe_allow_html=True)
+
+            # 2. Level Siaga (Kuning) untuk prediksi antara 51% dan 70%
+            elif prediction > 0.50:
+                st.markdown("""
+                    <div style="background-color: #fff3cd; color: #856404; padding: 20px; margin: 10px auto; border: 1px solid #ffeeba; border-radius: 5px; max-width: 700px; text-align: center;">
+                        <h4 style="margin-top: 0;">⚠️ STATUS SIAGA</h4>
+                        <h5 style="margin-top: 0; font-weight: normal;">Tingkat Risiko Banjir Menengah</h5>
+                        <p style="text-align: justify; margin-bottom: 0;">
+                            Mohon tetap waspada terhadap kemungkinan kondisi memburuk. Siapkan tas siaga bencana, amankan dokumen dan barang-barang penting ke tempat yang lebih tinggi. Pantau terus perkembangan cuaca.
+                        </p>
+                    </div>
+                """, unsafe_allow_html=True)
+
+            # 3. Level Normal (Hijau) untuk prediksi 50% ke bawah
             else:
                 st.markdown("""
-                    <div style="background-color: #d4edda; color: #155724; padding: 20px; margin: 20px auto; border: 1px solid #c3e6cb; border-radius: 5px; max-width: 700px; text-align: center;">
-                        <h4 style="margin-top: 0;">✅ STATUS AMAN</h4> <h5 style="margin-top: 0;">Tingkat risiko banjir rendah</h5>
-                        <p style="text-align: justify;">Cuaca dan kondisi lingkungan saat ini tergolong aman. Tetap waspada dan ikuti informasi resmi jika ada perubahan situasi.</p>
-                    </div>""", unsafe_allow_html=True)
+                    <div style="background-color: #d4edda; color: #155724; padding: 20px; margin: 10px auto; border: 1px solid #c3e6cb; border-radius: 5px; max-width: 700px; text-align: center;">
+                        <h4 style="margin-top: 0;">✅ STATUS NORMAL</h4>
+                        <h5 style="margin-top: 0; font-weight: normal;">Tingkat Risiko Banjir Rendah</h5>
+                        <p style="text-align: justify; margin-bottom: 0;">
+                            Berdasarkan data saat ini, kondisi tergolong aman dari risiko banjir. Meskipun demikian, tetaplah waspada dan ikuti informasi resmi jika ada perubahan situasi.
+                        </p>
+                    </div>
+                """, unsafe_allow_html=True)
+
 
             # —————— KODE CARD SOSIALISASI ——————
             st.markdown("---")
@@ -141,7 +164,7 @@ with st.container():
                 st.markdown("""
                     <div class="custom-card">
                         <img src="https://raw.githubusercontent.com/teguhh18/image-streamlit/main/monsoon.jpg" width="100%" height="200px" style="border-radius:10px; object-fit:cover;">
-                        <h4>Intensitas Muson</h4>
+                        <h4>Intensitas Curah Hujan</h4>
                         <p>Musim muson membawa curah hujan tinggi yang bisa menyebabkan banjir besar, terutama di daerah dataran rendah. Masyarakat perlu memahami pola cuaca musiman dan meningkatkan kesiapan saat intensitas muson meningkat, seperti membersihkan saluran air dan tidak membuang sampah sembarangan.</p>
                     </div>
                 """, unsafe_allow_html=True)
