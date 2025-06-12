@@ -78,19 +78,19 @@ with st.container():
 
     with st.form("flood_input_form", clear_on_submit=False):
         st.subheader("📝 Silahkan Masukkan Data Untuk Prediksi Dibawah ini")
-        st.info("**Petunjuk:** Untuk semua fitur di bawah ini, silakan masukkan nilai antara **0** hingga **30**.", icon="ℹ️")
+        st.info("**Petunjuk:** Untuk semua fitur di bawah ini, silakan masukkan nilai antara **0** hingga **30**. Semakin tinggi nilai yang diinput, berarti semakin tinggi tingkat keparahannya", icon="ℹ️")
         col1, col2 = st.columns([1, 1])
         with col1:
-            MonsoonIntensity = st.number_input("Moon Soon Intensity", step=1, min_value=0, max_value=30)
-            CoastalVulnerability = st.number_input("Coastal Vulnerability", step=1, min_value=0, max_value=30)
-            WetlandLoss = st.number_input("WetlandLoss", step=1, min_value=0, max_value=30)
-            Encroachments = st.number_input("Encroachments", min_value=0, step=1, max_value=30)
+            MonsoonIntensity = st.number_input("Intensitas Curah Hujan", step=1, min_value=0, max_value=30, help="Menjelaskan seberapa tinggi curah hujan saat musim muson. Nilai 0 berarti hujan ringan, nilai 25 berarti hujan sangat lebat dan ekstrem.")
+            CoastalVulnerability = st.number_input("Kerentanan Wilayah Pesisir", step=1, min_value=0, max_value=30, help="Menggambarkan risiko banjir dari laut (banjir rob). Nilai 0 berarti wilayah pesisir aman, nilai 25 berarti sangat rentan terhadap pasang laut ekstrem.")
+            WetlandLoss = st.number_input("Kehilangan Lahan Basah", step=1, min_value=0, max_value=30, help="Mengukur seberapa banyak area resapan air alami (rawa, danau) yang hilang. Lahan basah berfungsi seperti spons untuk menyerap air hujan.")
+            Encroachments = st.number_input("Perambahan Lahan (Pembangunan Liar)", min_value=0, step=1, max_value=30, help="Tingkat pembangunan di area terlarang (misal: bantaran sungai) yang dapat menyumbat aliran air. Nilai 0 berarti tidak ada, 25 berarti sangat banyak.")
         with col2:
-            Urbanization = st.number_input("Urbanization", step=1, min_value=0, max_value=30)
-            Siltation = st.number_input("Siltation", step=1, min_value=0, max_value=30)
-            Deforestation = st.number_input("Deforestation", step=1, min_value=0, max_value=30)
+            Urbanization = st.number_input("Kepadatan Penduduk (Urbanisasi)", step=1, min_value=0, max_value=30, help="Seberapa padat wilayah dengan bangunan dan jalan beton/aspal. Semakin tinggi nilainya, semakin sedikit tanah yang bisa menyerap air.")
+            Siltation = st.number_input("Pendangkalan Sungai (Sedimentasi)", step=1, min_value=0, max_value=30, help="Tingkat pendangkalan sungai akibat endapan lumpur/pasir. Sungai yang dangkal (nilai tinggi) tidak dapat menampung banyak air dan mudah meluap.")
+            Deforestation = st.number_input("Deforestasi (Penggundulan Hutan)", step=1, min_value=0, max_value=30, help="Mengukur tingkat penggundulan hutan. Hutan yang gundul (nilai tinggi) kehilangan kemampuan untuk menyerap dan menahan air hujan.")
 
-        submitted = st.form_submit_button("Predict", type="primary")
+        submitted = st.form_submit_button("Prediksi", type="primary")
     st.markdown("---")
 
     if submitted:
@@ -120,7 +120,7 @@ with st.container():
             if prediction >= 0.8:
                 st.markdown("""
                     <div style="background-color: #fff3cd; color: #856404; padding: 20px; margin: 20px auto; border: 1px solid #ffeeba; border-radius: 5px; max-width: 700px; text-align: center;">
-                        <h4 style="margin-top: 0;">⚠️ WARNING ALERT!!!</h4> <h5 style="margin-top: 0;">Tingkat Risiko Banjir Tinggi</h5>
+                        <h4 style="margin-top: 0;">⚠️ PERINGATAN !!!</h4> <h5 style="margin-top: 0;">Tingkat Risiko Banjir Tinggi</h5>
                         <p style="text-align: justify;">Mohon tetap waspada dan segera amankan barang-barang penting. Pantau terus perkembangan cuaca dan ikuti arahan resmi dari pemerintah daerah apabila kondisi memburuk.</p>
                     </div> """, unsafe_allow_html=True)
             else:

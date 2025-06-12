@@ -23,7 +23,7 @@ st.markdown("""
 - Tim Pengembang:
   - Ahmad Noval (Universitas Mercu Buana)
   - Khafka Fadillah Wibawa Nurdiansyah (UIN Sunan Gunung Djati Bandung)
-  - Nafa Khairunnisah (UIN Sunan Gunung Djati Bandung)
+  - Nafa Khairunnisa (UIN Sunan Gunung Djati Bandung)
   - Teguh Budiono (Universitas Teknokrat Indonesia)
 - GitHub: https://github.com/teguhh18/Capstone_LaskarAI_LAI25-SM089
 """)
