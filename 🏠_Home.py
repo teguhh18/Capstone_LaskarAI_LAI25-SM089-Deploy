@@ -135,7 +135,7 @@ with st.container():
                         <h4 style="margin-top: 0;">⚠️ STATUS SIAGA</h4>
                         <h5 style="margin-top: 0; font-weight: normal;">Tingkat Risiko Banjir Menengah</h5>
                         <p style="text-align: justify; margin-bottom: 0;">
-                            Mohon tetap waspada terhadap kemungkinan kondisi memburuk. Siapkan tas siaga bencana, amankan dokumen dan barang-barang penting ke tempat yang lebih tinggi. Pantau terus perkembangan cuaca.
+                            Mohon tetap siaga terhadap kemungkinan kondisi memburuk. Siapkan tas siaga bencana, amankan dokumen dan barang-barang penting ke tempat yang lebih tinggi. Pantau terus perkembangan cuaca.
                         </p>
                     </div>
                 """, unsafe_allow_html=True)
